@@ -1,0 +1,136 @@
+---
+title: "Heart Disease UCI"
+author: "Min-Jhen Wu"
+date: "2021/10/28"
+output: html_document
+---
+
+Find interesting dataset and prepare short report (in R Markdown) which will consists:
+
+-  short description of the dataset,
+-  4 barplots which will present interesting relationships between variables,
+-  brief comments which describes obtained results.
+
+Then, edit theme of the graphs and all scales of the graph and prepare publication-ready plots. 
+
+## Introduction
+- The dataset is publically available on the Kaggle website, and it is from an ongoing cardiovascular study on residents of the town of Framingham, Massachusetts. The classification goal is to predict whether the patient has 10-year risk of future coronary heart disease (CHD).The dataset provides the patients’ information. It includes over 4,000 records and 15 attributes.
+
+Source: https://www.kaggle.com/ronitf/heart-disease-uci
+
+## Data Variables
+- 1. male            | male or female (Nominal)
+- 2. age             | Age of the patient (Continuous)
+- 3. education       | whether or not the patient is a current smoker (Nominal)
+- 4. currentSmoker   | whether or not the patient is a current smoker (Nominal)
+- 5. cigsPerDay      | the number of cigarettes that the person smoked on average in one day.
+- 6. BPMeds          | whether or not the patient was on blood pressure medication (Nominal)
+- 7. prevalentStroke | whether or not the patient had previously had a stroke (Nominal)
+- 8. prevalentHyp    | whether or not the patient was hypertensive (Nominal)
+- 9. diabetes        | whether or not the patient had diabetes (Nominal)
+- 10. totChol        | total cholesterol level (Continuous)
+- 11. sysBP          | systolic blood pressure (Continuous)
+- 12. diaBP          | diastolic blood pressure (Continuous)
+- 13. BMI            | Body Mass Index (Continuous)
+- 14. heartRate      | heart rate (Continuous)
+- 15. glucose        | glucose level (Continuous)
+- 16. TenYearCHD     | 10 year risk of coronary heart disease CHD (binary: “1”, means “Yes”, “0” means “No”)
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(RColorBrewer)
+
+hdiease <- read.csv('/Users/jeank4723/Desktop/Advance VR/1/Data/framingham.csv')
+
+head(hdiease)
+
+
+hdiease <- hdiease %>% 
+              mutate_at(c("male","education","currentSmoker",
+                          "prevalentStroke","prevalentHyp","diabetes",
+                          "TenYearCHD"), as.factor)
+
+
+str(hdiease)
+
+```
+
+
+
+## 4 barplots
+
+1. Age and Count
+In this plot, we obtain the range of Age of the patient, the main subjects are middle-aged and elderly. The highest amount of the Age of the patient is 40 which is nearly 200 people. The youngest patient and oldest patient have 38 years different.
+
+
+```{r}
+p1 <- ggplot(data = hdiease, aes(x = age))  
+
+p1 + 
+  geom_bar(stat = 'Count', aes(y = ..count..), fill = 'skyblue4') +
+  labs(x = 'Age', y = 'Population', title = 'Age of the patient') +
+  theme_classic()
+
+```
+2. CurrentSmoker and Gender
+According to the plot, it shows that female patients in total are more than male patients. Moreover, male current smoker are more than female, but in the other way male people who are not current smoker are less than female people. However, we do not know if current smoker is more or less than not current smoker in this plot. if we would like to know we can switch the 'position = "dodge"' into 'position = "stack"'.
+
+
+```{r}
+p2 <- ggplot(data = hdiease, aes(x = currentSmoker, fill = male)) 
+   
+p2 + geom_bar(position = "dodge") +
+  xlab('Current Smoker') +
+  ylab('Population') +
+  labs(title = 'Current Smokers',
+       subtitle = '0 means not a current smoker; 1 means a current smoker',
+       fill = 'Gender')
+```
+3. Education Level 
+In this pie plot, we can see that the majority of people are at the Level 1 education. In addtion, the second most is Level 2 education. The line which is surrounding the pie plot indicates the accumulation number of people is divided by education variable.
+
+
+Note: + scale_fill_brewer() for different color
+```{r}
+hdiease_edunum <- hdiease %>% 
+  count(education)
+str(hdiease_edunum)
+
+p3 <- ggplot(data = hdiease_edunum, aes(x = "", y = n, fill = education)) 
+
+library(wesanderson)
+
+
+p3 + geom_bar(width = 1, stat = "identity", color = "white") + 
+  coord_polar("y", start=0) +
+  scale_fill_hue(c=45, l=80) +
+  labs(title = "Patients' Education level")
+
+
+```
+4. Average BMI and Education
+
+- Underweight = <18.5
+- Normal weight = 18.5–24.9
+- Overweight = 25–29.9
+- Obesity = BMI of 30 or greater
+
+We can see that at least more than half of patients are close to or more than 25 BMI value which means most of them are currently in a state of overweight.
+
+```{r}
+
+hdiease_edu <- hdiease %>% 
+  group_by(education) %>% 
+  summarise(BMI = median(BMI,na.rm=TRUE))
+
+p4 <- ggplot(data = hdiease_edu, aes(x = education , y = BMI, fill = education))
+
+p4 + 
+  geom_bar(stat = 'identity',show.legend = F) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = 'Education', y = 'Average BMI', title = 'Median BMI group by Education') 
+
+```
