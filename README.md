@@ -22,14 +22,14 @@ Heart Disease UCI
 - coord_polar()
 
 ## Task 4
-- Supermarket Sales
+Supermarket Sales
 - geom_line()
 - scale_x_date()
 - scale_color_manual()
 - scale_y_continuous()
 
 ## Task 5
-- World Data
+World Data
 - library(lubridate)
 - library(readr)
 - library(scales)
