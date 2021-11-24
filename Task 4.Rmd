@@ -1,0 +1,164 @@
+---
+title: "Supermarket Sales"
+author: "Min-Jhen Wu"
+date: "2021/11/4"
+output: html_document
+toc: true
+number_sections: true
+---
+
+Find interesting dataset which consists time series and prepare short report (in R Markdown) which will consists:
+- short description of the dataset,
+- 4 lineplots which will present interesting relationships between variables,
+- brief comments which describes obtained results.
+ 
+Then, edit theme of the graphs and all scales of the graph and prepare publication-ready plots. 
+
+## Introduction
+The growth of supermarkets in most populated cities are increasing and market competitions are also high. The dataset is one of the historical sales of supermarket company which has recorded in 3 different branches for 3 months data. Predictive data analytics methods are easy to apply with this dataset.
+
+
+Source: https://www.kaggle.com/aungpyaeap/supermarket-sales
+
+## Data Variables
+
+1. Invoice id    | Computer generated sales slip invoice identification number
+2. Branch        | Branch of supercenter (A/B/C).
+3. City          | Location of supercenters
+4. Customer type | Type of customers,Members/Normal with or without member card.
+5. Gender        | Gender type of customer
+6. Product line  | General item categorization groups
+Electronic accessories/ Fashion accessories/Food and beverages/Health and beauty/Home and lifestyle/Sports and travel
+7. Unit price    | Price of each product in $
+8. Quantity      | Number of products purchased by customer
+9. Tax           | 5% tax fee for customer buying
+10. Total        | Total price including tax
+11. Date         | Date of purchase (MM/DD/YYYY)
+12. Time         | Purchase time (10am to 9pm)
+13. Payment      | Payment used by customer for purchase (Cash/Credit card/Ewallet)
+14. COGS         | Cost of goods sold
+15. Gross margin percentage| Gross margin percentage
+16. Gross income | Gross income
+17. Rating       | Customer stratification rating on their overall shopping experience (On a scale of 1 to 10)
+
+          
+
+```{r}
+Sys.setenv(LANG = "en")
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(readr)
+library(scales)
+
+supermarket_sale <- read.csv('.../Data/supermarket_sale.csv')
+
+head(supermarket_sale)
+
+
+supermarket_sale <- na.omit(supermarket_sale)
+
+
+
+supermarket_sale$Date <- as.Date(supermarket_sale$Date, format = "%m/%d/%Y")
+
+str(supermarket_sale)
+colnames(supermarket_sale)
+
+```
+
+
+## 4 lineplots{.tabset}
+
+### 1. Date and Total
+In the plot, there are time series and gross income. We can see how the sales fluctuate in this supermarket.
+
+```{r}
+
+gross_income_date <- supermarket_sale  %>% 
+  group_by(Date) %>% 
+  summarise(gross.income = sum(gross.income))
+
+
+p1 <- ggplot(data = gross_income_date, aes(x = Date, y = gross.income))   
+
+p1 + 
+  geom_point(color = "orange") +
+  geom_line( color = "skyblue", size = 0.5) +
+  theme_minimal()  +
+  labs(title = "Daily Gross Income", x = "Date", y = "Gross Income") +
+  scale_x_date(labels = date_format("%Y-%m"))
+
+
+```
+
+### 2. Total and Gender
+According to the plot, we can see that the difference in male customers' shopping habits in supermarkets is greater than that of women. The way male customers buy is to buy a lot or not to buy. 
+
+
+```{r}
+
+stat2 <- supermarket_sale %>% 
+  group_by(Date, Gender) %>% 
+  summarise(Total = mean(Total))
+
+p2 <- ggplot(data = stat2, aes(x = Date, y = Total, color = factor(Gender)))
+   
+p2 +
+  geom_point() +
+  geom_line() +
+  theme_bw()+
+  labs(title = "The total price divide by Gender", 
+       x = "Date", 
+       y = "Total Price", 
+       colour = "Gender") +
+  scale_x_date(labels = date_format("%Y-%m"))
+```
+
+### 3. Gross Income and Customer Type 
+In the plot, the orange line indicated to supermarket customers with membership, and the blue line are not the member of the branch A supermarket. The supermarket received more gross income from customers with membership than customers without it. We can not obviously tell that customers with membership shop more than customers without it. However, we can see that membership can attract customer to come purchasing.
+```{r}
+
+stat3 <- supermarket_sale %>%
+  filter(Branch == "A") %>% 
+  group_by(Date, Customer.type) %>% 
+  summarise(gross.income = mean(gross.income))
+
+p3 <- ggplot(data = stat3, aes(x = Date, y = gross.income, color = factor(Customer.type)))
+   
+p3 +
+  geom_point() +
+  geom_line() +
+  geom_path()+
+  labs(title = "The Daily Gross Income devied by Mebership", 
+       x = "Date", 
+       y = "Gross Income", 
+       colour = "Customer Type") +
+  scale_x_date(labels = date_format("%Y-%m")) +
+  scale_color_manual(values=c('Orange','skyblue'))
+
+```
+
+### 4. Average Total and Average Rating
+In the plot we can observe that the daily total price and the rating from the customer. In February, there was a day reach the highest total price. However, the customer rating was not follow the total price flow.
+
+```{r}
+stat4 <- supermarket_sale  %>% 
+  group_by(Date) %>% 
+  summarise(Total = mean(Total), Rating = mean(Rating))
+
+p4 <- ggplot(data = stat4, aes(x = Date)) 
+
+p4 +
+  geom_line(aes(y = Total), color = "steelblue") + # I series
+  geom_line(aes(y = Rating*100), color = "red") + # II series (scaled-up)
+  theme_grey() +
+  labs(title = "The Daliy Total Price and Rating by Customers", 
+       x = "Date", 
+       y = "Total Price") +
+  scale_y_continuous(sec.axis = sec_axis(~./100, name = 'Rating 1-10'))+
+  theme(legend.position = 'top')
+
+```

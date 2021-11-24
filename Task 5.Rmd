@@ -1,0 +1,362 @@
+---
+title: "World Data"
+author: "Min-Jhen Wu"
+date: "2021/11/5"
+output: html_document
+toc: true
+number_sections: true
+---
+
+Find interesting dataset and prepare short report (in R Markdown) which will consists:
+- short description of the dataset,
+- 6 plots where you use labels, smoothing line, scatterplots and other interesting tweaks you can find on ggplot extentions website.
+-  brief comments which describes obtained results.
+
+Then, edit theme of the graphs and all scales of the graph and prepare publication-ready plots. 
+
+## Introduction
+This dataset is compiled by the US Government between 1970 - 2017. It has a total of twenty columns which represent economic indicators. 
+
+
+Source: https://www.kaggle.com/fernandol/countries-of-the-world
+
+## Data Variables
+
+1. Country       | Countries' name
+2. Region        | Africa, Asia, Middle East, Americas...
+3. Population    | Countries' population
+4. Area          | The square mile (sq. mi.)
+5. Pop. Density  | Population density (per sq. mi.)
+6. Coastline     | The boundary between sea and land(coast/area ratio)
+7. Net migration | The difference between the number of immigrants and the number of emigrants
+8. Infant mortality | The death of an infant before his or her first birthday (per 1000 births)
+9. GDP           | Gross domestic product (USD per capita)
+10. Literacy (%) | proportion of the population that have the ability to read and write.
+11. Phones       | (per 1000)
+12. Arable       | Rate of land used for or right for growing crops
+13. Crops        | 
+14. Other        | 
+15. Climate      | 
+    - 1 - Dry tropical or tundra and ice, classification B and E. 
+    - 2 - Wet tropical, classification A. 
+    - 3 - Temperate humid subtropical and temperate continental, classification Cfa, Cwa, and D. 
+    - 4- Dry hot summers and wet winters.
+16. Birth rate   | Rate of birth %
+17. Death rate   | Rate of death %
+18. Agriculture  | 
+19. Industry     | part of industry in the economy  
+20. Service      | part of service in the economy
+          
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(readr)
+library(scales)
+library(ggrepel)
+library(ggalt)
+library(stringr)
+
+world_gdp <- read.csv('.../Data/world_gdp.csv')
+
+colnames(world_gdp)
+
+
+world_gdp <- world_gdp %>%
+    mutate(Region = factor(Region, levels = c("ASIA (EX. NEAR EAST)         ",
+                                              "EASTERN EUROPE                     ",
+                                              "NORTHERN AFRICA                    ", 
+                                              "OCEANIA                            ",
+                                              "WESTERN EUROPE                     ", 
+                                              "SUB-SAHARAN AFRICA                 ",
+                                              "LATIN AMER. & CARIB    ",             
+                                              "C.W. OF IND. STATES ",
+                                              "NEAR EAST                          ", 
+                                              "NORTHERN AMERICA                   ",
+                                              "BALTICS                            "), 
+              labels = c("ASIA",
+                         "EAST_EUROPE",
+                         "NOR_AFRICA",
+                         "OCEANIA",
+                         "WEST_EUROPE", 
+                         "SUB-SAHARAN AFRICA",
+                         "LATIN AMER. & CARIB",             
+                         "CW_IND. STATES",
+                         "NEAR EAST", 
+                         "NOR_AMERICA",
+                         "BALTICS")))
+
+colnames(world_gdp) <- c("Country", 
+                         "Region", 
+                         "Population", 
+                         "Area", 
+                         "Pop_Density", 
+                         "Coastline_ratio", 
+                         "Net_migration", 
+                         "Infant_mortality", 
+                         "GDP", 
+                         "Literacy", 
+                         "Phones_rate", 
+                         "Arable_rate", 
+                         "Crops_rate", 
+                         "Other_rate", 
+                         "Climate", 
+                         "Birthrate", 
+                         "Deathrate", 
+                         "Agriculture", 
+                         "Industry",
+                         "Service")
+  
+
+head(world_gdp)
+
+
+# world_gdp <- na.omit(world_gdp)
+
+
+world_pop <- data.frame(world_gdp$Country)
+
+world_gdp$Pop_Density <- str_replace_all(world_gdp$Pop_Density, ',','.')
+world_gdp$Coastline_ratio <- str_replace_all(world_gdp$Coastline_ratio, ',','.')
+world_gdp$Net_migration <- str_replace_all(world_gdp$Net_migration, ',','.')
+world_gdp$Infant_mortality <- str_replace_all(world_gdp$Infant_mortality, ',','.')
+world_gdp$Literacy <- str_replace_all(world_gdp$Literacy, ',','.')
+world_gdp$Phones_rate <- str_replace_all(world_gdp$Phones_rate, ',','.')
+world_gdp$Arable_rate <- str_replace_all(world_gdp$Arable_rate, ',','.')
+world_gdp$Crops_rate <- str_replace_all(world_gdp$Crops_rate, ',','.')
+world_gdp$Other_rate <- str_replace_all(world_gdp$Other_rate, ',','.')
+world_gdp$Birthrate <- str_replace_all(world_gdp$Birthrate, ',','.')
+world_gdp$Deathrate <- str_replace_all(world_gdp$Deathrate, ',','.')
+world_gdp$Agriculture <- str_replace_all(world_gdp$Agriculture, ',','.')
+world_gdp$Industry <- str_replace_all(world_gdp$Industry, ',','.')
+world_gdp$Service <- str_replace_all(world_gdp$Service, ',','.')
+
+
+# Population per million
+world_gdp$Population <- as.integer(world_gdp$Population/100000)
+world_gdp$Pop_Density <- as.numeric(world_gdp$Pop_Density)
+world_gdp$Coastline_ratio <- as.numeric(world_gdp$Coastline_ratio)
+world_gdp$Net_migration <- as.numeric(world_gdp$Net_migration)
+world_gdp$Infant_mortality <- as.numeric(world_gdp$Infant_mortality)
+world_gdp$Literacy <- as.numeric(world_gdp$Literacy)
+world_gdp$Phones_rate <- as.numeric(world_gdp$Phones_rate)
+world_gdp$Arable_rate <- as.numeric(world_gdp$Arable_rate)
+world_gdp$Crops_rate <- as.numeric(world_gdp$Crops_rate)
+world_gdp$Other_rate <- as.numeric(world_gdp$Other_rate)
+world_gdp$Birthrate <- as.numeric(world_gdp$Birthrate)
+world_gdp$Deathrate <- as.numeric(world_gdp$Deathrate)
+world_gdp$Agriculture <- as.numeric(world_gdp$Agriculture)
+world_gdp$Industry <- as.numeric(world_gdp$Industry)
+world_gdp$Service <- as.numeric(world_gdp$Service)
+
+world_gdp$Climate <- as.factor(world_gdp$Climate)
+
+tail(world_gdp)
+    
+    
+```
+
+
+## 6 plots{.tabset}
+
+### 1. GDP and Population
+In the plot, we can observe that there are two countries in the red circle, India and China, who have high population. However, their population density are close to 4000 per square meter which is not higher than mean value. In the blue circle, USA and Japan, which circled those countries which have high GDP and average population.   
+
+```{r}
+
+world_gdp_countries <- world_gdp  %>%
+  group_by(Country) %>%
+  summarise(Population = sum(Population, na.rm = TRUE), GDP = mean(GDP, na.rm = TRUE), Pop_Density = Pop_Density, Region) 
+
+high_gdp <- world_gdp_countries %>% 
+  filter(GDP > 20000, GDP <= 100000, Population > 1000, Population < 5000)
+
+high_pop <- world_gdp_countries %>% 
+  filter(GDP > 100, GDP < 10000, Population > 10000, Population < 50000)
+
+
+p1 <- ggplot(world_gdp_countries, aes(x = GDP, y = Population))
+
+p1 +
+  geom_point(aes(size = Pop_Density, color = Region)) +
+  geom_text_repel(aes(label = Country ), size = 2) +
+  labs(title = 'Population and GDP',
+       x = 'GDP' , y = 'Population (per million)')  + 
+  theme_bw() + 
+  geom_text_repel(aes(label = Country)) +
+  geom_encircle(data = high_gdp, color = "blue", size =  1, expand = 0.09) +
+  geom_encircle(data = high_pop, color = "red", size =  1, expand = 0.09) 
+
+
+```
+
+### 2. Climate and Literacy in EUROPE
+In this plot, we can see that the GDP of the countries is not closely related to the literacy. In addition, the plot shows that all the countries in Europe have their literacy higher than average except one country Albania.
+
+
+
+```{r}
+
+EUR_gdp <- world_gdp %>%
+  filter(Region == 'WEST_EUROPE'| Region == 'EAST_EUROPE') %>%
+  summarise(GDP = GDP, Literacy = Literacy, Country = Country, Climate = Climate)
+
+# EUR_gdp <- EUR_gdp %>%
+#     mutate(Climate = factor(Climate, levels = c("1","2","3","4",""), 
+#               labels = c("1","2","3","4","Unknown")))
+
+
+p2 <- ggplot(data = EUR_gdp, aes(x = GDP, y = Literacy, color = Climate))
+
+p2 +
+  geom_point(aes(size = GDP)) + 
+  geom_text_repel(aes(label = Country)) +
+   geom_hline(yintercept = median(world_gdp$Literacy, na.rm = TRUE), 
+             linetype = 'longdash') 
+```
+
+### 3. Agricultural Situation
+The plot shows that the counties have higher arable rate of land used for or right for growing crops do not have high crops rate. The each point represent each region, there is no point in red square in the plot so we know that there is no region has high crops rate and higher arable rate at the same time. 
+
+
+
+```{r}
+
+world_farm <- world_gdp %>%
+  group_by(Region) %>%
+  summarise(Arable_rate = mean(Arable_rate, na.rm = TRUE), Crops_rate = mean(Crops_rate, na.rm = TRUE), GDP = mean(GDP, na.rm = TRUE), Coastline_ratio = mean(Coastline_ratio, na.rm = TRUE))
+
+p3 <- ggplot(world_farm, aes(x = Arable_rate, y = Crops_rate))
+
+world_sel <- world_farm %>% 
+  filter(Arable_rate > 5, Arable_rate <= 8.2, Crops_rate > 800, Crops_rate < 1100)
+
+p3 +
+  geom_point(aes(size = GDP/1000, color = Region)) +
+  labs(title = 'Agricultural Situation', color = 'Region',
+       x = 'Arable Rate' , y = 'Crops Rate', size = 'GDP')  + 
+  theme_bw()  +
+  geom_text_repel(aes(label = Region ), size = 2) +
+  # geom_encircle(data = crime_sel, color = "red", size =  2, expand = 0.09) +
+  # theme(legend.position = 'top') +
+  geom_vline(xintercept = mean(world_gdp$Arable_rate, na.rm = TRUE), 
+             linetype = 'longdash') +
+  geom_hline(yintercept = mean(world_gdp$Crops_rate, na.rm = TRUE), 
+             linetype = 'longdash') +
+  annotate("rect", xmin = mean(world_gdp$Arable_rate, na.rm = TRUE), xmax = Inf, 
+           ymin = mean(world_gdp$Crops_rate, na.rm = TRUE), ymax = Inf, alpha = 0.1, fill = "red") +
+  annotate("rect", xmin = -Inf, xmax = mean(world_gdp$Arable_rate, na.rm = TRUE), 
+           ymin = -Inf, ymax = mean(world_gdp$Crops_rate, na.rm = TRUE), alpha = 0.1, fill = "green") +
+  annotate("text", label = "Fertile Area ", 
+           x = mean(world_gdp$Arable_rate, na.rm = TRUE), 
+           y = mean(world_gdp$Crops_rate, na.rm = TRUE), size = 4,  hjust = 0, vjust = -1, colour = "red") +
+  annotate("text", label = "Infertile Area", 
+           x = mean(world_gdp$Arable_rate, na.rm = TRUE), 
+           y = mean(world_gdp$Crops_rate, na.rm = TRUE), size = 4, hjust = 1, vjust = 1, colour = "darkgreen")
+
+```
+
+### 4. Infant Mortality and GDP
+
+Before running the plot, I assume that the country with high infant mortality has low GDP. Because if a country has high value of the infant mortality which means they do not have proper health care in their country also mean they do not productive, they have low GDP. According to the plot, my assumption is correct 50%. We can observe that high infant mortality lead to low GDP. However, low infant mortality could not lead to any result of GDP.
+
+
+```{r}
+world_high_infant_mortality <- world_gdp  %>%
+  filter(world_gdp$Infant_mortality > mean(world_gdp$Infant_mortality, na.rm = TRUE)) %>% 
+  summarise(GDP = GDP, Country = Country, Infant_mortality, Region) 
+
+p4 <- ggplot(world_high_infant_mortality, aes(x = Infant_mortality, y = GDP))
+
+p4 +
+  geom_point(aes(color = Region)) +  
+  
+  geom_text_repel(aes(label = Country ), size = 3) +
+  annotate("rect", 
+           xmin = 100, 
+           xmax = Inf, 
+           ymin = 6000, 
+           ymax = -Inf, 
+           alpha = 0.1, fill = "red") +
+  
+  annotate("rect", 
+           xmin = -Inf, 
+           xmax = 100, 
+           ymin = Inf, 
+           ymax = 6000, 
+           alpha = 0.1, fill = "green") +
+  
+  labs(title = "Infant Mortality and GDP",
+       x = "Infant Mortality",
+       y = "GDP")
+
+```
+
+### 5. Infant Mortality and Literacy
+I randomly pick the countries in this plot. There is 143 observations. The horizontal line indicated mean of literacy and vertical line indicated to mean of infant mortality. In this plot, we can see that the counties with high infant mortality have low level of literacy which mean literacy and infant mortality are closely related.
+
+
+```{r}
+world_high_infant_mortality <- world_gdp  %>%
+  filter(str_detect(Country, "^[A-M]")) %>% 
+  summarise(GDP = GDP, Country = Country, Infant_mortality, Region, Literacy) 
+
+p5 <- ggplot(world_high_infant_mortality, aes(x = Infant_mortality, y = Literacy))
+
+p5 +
+  geom_point(aes(color = Region)) +  
+  
+  geom_text_repel(aes(label = Country ), size = 3) +
+  
+  geom_vline(xintercept = mean(world_gdp$Infant_mortality, na.rm = TRUE), 
+             linetype = 'longdash') +
+  geom_hline(yintercept = mean(world_gdp$Literacy, na.rm = TRUE), 
+             linetype = 'longdash') +
+  
+  labs(title = "Infant Mortality and Literacy",
+       x = "Infant Mortality",
+       y = "Literacy") 
+  # annotate("rect", 
+  #          xmin = mean(world_gdp$Infant_mortality, na.rm = TRUE), 
+  #          xmax = Inf, 
+  #          ymin = mean(world_gdp$Literacy, na.rm = TRUE), 
+  #          ymax = -Inf) +
+  # 
+  # annotate("rect", 
+  #          xmin = -Inf, 
+  #          xmax = mean(world_gdp$Infant_mortality, na.rm = TRUE), 
+  #          ymin = Inf, 
+  #          ymax = mean(world_gdp$Literacy, na.rm = TRUE)) +
+  
+
+```
+
+### 6. Birthrate and Deathrate
+According to the plot, the result shows that the countries with high GDP have low birth rate and low death rate. On the contrary, the countries with high birth rate and high death rate have low GDP.
+
+
+```{r}
+world_birth_death <- world_gdp  %>%
+  filter(str_detect(Country, "^[N-Z]")) %>% 
+  summarise(Country = Country, Birthrate, Region, Deathrate, GDP = GDP) 
+
+
+p6 <- ggplot(world_birth_death, aes(x = Birthrate, y = Deathrate))
+
+p6 +
+  geom_point(aes(size = GDP/1000, color = Region)) +  
+  
+  geom_text_repel(aes(label = Country ), size = 3) +
+  
+  geom_vline(xintercept = median(world_gdp$Birthrate, na.rm = TRUE), 
+             linetype = 'longdash') +
+  geom_hline(yintercept = median(world_gdp$Deathrate, na.rm = TRUE), 
+             linetype = 'longdash') +
+  labs(title = "Birth Rate and Death Rate",
+       x = "Birth Rate",
+       y = "Death Rate") 
+
+
+```
